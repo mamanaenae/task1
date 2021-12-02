@@ -37,8 +37,8 @@ Resources:
           MapPublicIpOnLaunch: false
       
       InternetGateway:
-         Type:  'AWS::EC2::InternetGateway'
-         Property:
+         Type: AWS::EC2::InternetGateway
+         DependsOn: VPC
 
       GatewayToInternet:
          Type: AWS::EC2::VPCGatewayAttachment
@@ -47,77 +47,78 @@ Resources:
           VpcId: !Ref VPC
 
         # Public Subnets Route Tables and routes
-       PublicRouteTable:
+
+      PublicRouteTable:
          Type: AWS::EC2::RouteTable
          Properties:
-         VpcId: !Ref VPC
+           VpcId: !Ref VPC
      
 
       PublicSubnetsRoute:
         Type: AWS::EC2::Route
         DependsOn: GatewayToInternet
         Properties:
-        RouteTableId: !Ref PublicRouteTable
-        DestinationCidrBlock: 0.0.0.0/0
-        GatewayId: !Ref InternetGateway         
+          RouteTableId: !Ref PublicRouteTable
+          DestinationCidrBlock: 0.0.0.0/0
+          GatewayId: !Ref InternetGateway         
    
       PublicSubnet1RouteTableAssociation:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
-        RouteTableId: !Ref PublicRouteTable
-        SubnetId: !Ref PublicSubnet1      
+          RouteTableId: !Ref PublicRouteTable
+          SubnetId: !Ref PublicSubnet1      
     
       PublicSubnet2RouteTableAssociation:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
-        RouteTableId: !Ref PublicRouteTable
-        SubnetId: !Ref PublicSubnet2
+          RouteTableId: !Ref PublicRouteTable
+          SubnetId: !Ref PublicSubnet2
 
        # Private Subnets - NAT Gateways
       NatGatewayEIP:
         DependsOn: GatewayToInternet           
         Type: AWS::EC2::EIP
         Properties:
-        Domain: VPC
+          Domain: VPC
 
-       NatGateway:
+      NatGateway:
         Type: AWS::EC2::NatGateway
         Properties:
-        AllocationId: !GetAtt ElasticIPAddress.AllocationId
-        SubnetId: !Ref PublicSubnet1          
+          AllocationId: !GetAtt NatGatewayEIP.AllocationId
+          SubnetId: !Ref PublicSubnet1          
 
       PrivateSubnet1RouteTable:
         Type: AWS::EC2::RouteTable
         Properties:
-        VpcId: !Ref VPC
+          VpcId: !Ref VPC
       
       PrivateSubnet1Route:
         Type: AWS::EC2::Route
         Properties:
-        RouteTableId: !Ref PrivateSubnet1RouteTable
-        DestinationCidrBlock: 0.0.0.0/0
-        NatGatewayId: !Ref NatGateway
+          RouteTableId: !Ref PrivateSubnet1RouteTable
+          DestinationCidrBlock: 0.0.0.0/0
+          NatGatewayId: !Ref NatGateway
 
-  PrivateSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnet1
-      RouteTableId: !Ref PrivateSubnet1RouteTable      
+      PrivateSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+          SubnetId: !Ref PrivateSubnet1
+          RouteTableId: !Ref PrivateSubnet1RouteTable      
   
-  PrivateSubnet2RouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC   
+      PrivateSubnet2RouteTable:
+        Type: AWS::EC2::RouteTable
+        Properties:
+          VpcId: !Ref VPC   
 
-  PrivateSubnet2Route:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateSubnet2RouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway
+      PrivateSubnet2Route:
+        Type: AWS::EC2::Route
+        Properties:
+          RouteTableId: !Ref PrivateSubnet2RouteTable
+          DestinationCidrBlock: 0.0.0.0/0
+          NatGatewayId: !Ref NatGateway
 
-  PrivateSubnet2RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnet2
-      RouteTableId: !Ref PrivateSubnet2RouteTable
+      PrivateSubnet2RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+          SubnetId: !Ref PrivateSubnet2
+          RouteTableId: !Ref PrivateSubnet2RouteTable
