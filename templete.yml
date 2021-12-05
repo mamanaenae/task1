@@ -1,0 +1,458 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This templete creates a Scalable fault-tolerant and highly available infrastructure with a "hello world" app served with Apache
+Parameters:
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.small
+    AllowedValues: [t1.micro, t2.nano, t2.micro, t2.small, t2.medium, t2.large, m1.small,
+      m1.medium, m1.large, m1.xlarge, m2.xlarge, m2.2xlarge, m2.4xlarge, m3.medium,
+      m3.large, m3.xlarge, m3.2xlarge, m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge,
+      m4.10xlarge, c1.medium, c1.xlarge, c3.large, c3.xlarge, c3.2xlarge, c3.4xlarge,
+      c3.8xlarge, c4.large, c4.xlarge, c4.2xlarge, c4.4xlarge, c4.8xlarge, g2.2xlarge,
+      g2.8xlarge, r3.large, r3.xlarge, r3.2xlarge, r3.4xlarge, r3.8xlarge, i2.xlarge,
+      i2.2xlarge, i2.4xlarge, i2.8xlarge, d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge,
+      hi1.4xlarge, hs1.8xlarge, cr1.8xlarge, cc2.8xlarge, cg1.4xlarge]
+    ConstraintDescription: must be a valid E2 instance type
+Mappings:
+  AWSInstanceType2Arch:
+    t1.micro:
+      Arch: PV64
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+    t2.medium:
+      Arch: HVM64
+    t2.large:
+      Arch: HVM64
+    m1.small:
+      Arch: PV64
+    m1.medium:
+      Arch: PV64
+    m1.large:
+      Arch: PV64
+    m1.xlarge:
+      Arch: PV64
+    m2.xlarge:
+      Arch: PV64
+    m2.2xlarge:
+      Arch: PV64
+    m2.4xlarge:
+      Arch: PV64
+    m3.medium:
+      Arch: HVM64
+    m3.large:
+      Arch: HVM64
+    m3.xlarge:
+      Arch: HVM64
+    m3.2xlarge:
+      Arch: HVM64
+    m4.large:
+      Arch: HVM64
+    m4.xlarge:
+      Arch: HVM64
+    m4.2xlarge:
+      Arch: HVM64
+    m4.4xlarge:
+      Arch: HVM64
+    m4.10xlarge:
+      Arch: HVM64
+    c1.medium:
+      Arch: PV64
+    c1.xlarge:
+      Arch: PV64
+    c3.large:
+      Arch: HVM64
+    c3.xlarge:
+      Arch: HVM64
+    c3.2xlarge:
+      Arch: HVM64
+    c3.4xlarge:
+      Arch: HVM64
+    c3.8xlarge:
+      Arch: HVM64
+    c4.large:
+      Arch: HVM64
+    c4.xlarge:
+      Arch: HVM64
+    c4.2xlarge:
+      Arch: HVM64
+    c4.4xlarge:
+      Arch: HVM64
+    c4.8xlarge:
+      Arch: HVM64
+    g2.2xlarge:
+      Arch: HVMG2
+    g2.8xlarge:
+      Arch: HVMG2
+    r3.large:
+      Arch: HVM64
+    r3.xlarge:
+      Arch: HVM64
+    r3.2xlarge:
+      Arch: HVM64
+    r3.4xlarge:
+      Arch: HVM64
+    r3.8xlarge:
+      Arch: HVM64
+    i2.xlarge:
+      Arch: HVM64
+    i2.2xlarge:
+      Arch: HVM64
+    i2.4xlarge:
+      Arch: HVM64
+    i2.8xlarge:
+      Arch: HVM64
+    d2.xlarge:
+      Arch: HVM64
+    d2.2xlarge:
+      Arch: HVM64
+    d2.4xlarge:
+      Arch: HVM64
+    d2.8xlarge:
+      Arch: HVM64
+    hi1.4xlarge:
+      Arch: HVM64
+    hs1.8xlarge:
+      Arch: HVM64
+    cr1.8xlarge:
+      Arch: HVM64
+    cc2.8xlarge:
+      Arch: HVM64
+  AWSInstanceType2NATArch:
+    t1.micro:
+      Arch: NATPV64
+    t2.nano:
+      Arch: NATHVM64
+    t2.micro:
+      Arch: NATHVM64
+    t2.small:
+      Arch: NATHVM64
+    t2.medium:
+      Arch: NATHVM64
+    t2.large:
+      Arch: NATHVM64
+    m1.small:
+      Arch: NATPV64
+    m1.medium:
+      Arch: NATPV64
+    m1.large:
+      Arch: NATPV64
+    m1.xlarge:
+      Arch: NATPV64
+    m2.xlarge:
+      Arch: NATPV64
+    m2.2xlarge:
+      Arch: NATPV64
+    m2.4xlarge:
+      Arch: NATPV64
+    m3.medium:
+      Arch: NATHVM64
+    m3.large:
+      Arch: NATHVM64
+    m3.xlarge:
+      Arch: NATHVM64
+    m3.2xlarge:
+      Arch: NATHVM64
+    m4.large:
+      Arch: NATHVM64
+    m4.xlarge:
+      Arch: NATHVM64
+    m4.2xlarge:
+      Arch: NATHVM64
+    m4.4xlarge:
+      Arch: NATHVM64
+    m4.10xlarge:
+      Arch: NATHVM64
+    c1.medium:
+      Arch: NATPV64
+    c1.xlarge:
+      Arch: NATPV64
+    c3.large:
+      Arch: NATHVM64
+    c3.xlarge:
+      Arch: NATHVM64
+    c3.2xlarge:
+      Arch: NATHVM64
+    c3.4xlarge:
+      Arch: NATHVM64
+    c3.8xlarge:
+      Arch: NATHVM64
+    c4.large:
+      Arch: NATHVM64
+    c4.xlarge:
+      Arch: NATHVM64
+    c4.2xlarge:
+      Arch: NATHVM64
+    c4.4xlarge:
+      Arch: NATHVM64
+    c4.8xlarge:
+      Arch: NATHVM64
+    g2.2xlarge:
+      Arch: NATHVMG2
+    g2.8xlarge:
+      Arch: NATHVMG2
+    r3.large:
+      Arch: NATHVM64
+    r3.xlarge:
+      Arch: NATHVM64
+    r3.2xlarge:
+      Arch: NATHVM64
+    r3.4xlarge:
+      Arch: NATHVM64
+    r3.8xlarge:
+      Arch: NATHVM64
+    i2.xlarge:
+      Arch: NATHVM64
+    i2.2xlarge:
+      Arch: NATHVM64
+    i2.4xlarge:
+      Arch: NATHVM64
+    i2.8xlarge:
+      Arch: NATHVM64
+    d2.xlarge:
+      Arch: NATHVM64
+    d2.2xlarge:
+      Arch: NATHVM64
+    d2.4xlarge:
+      Arch: NATHVM64
+    d2.8xlarge:
+      Arch: NATHVM64
+    hi1.4xlarge:
+      Arch: NATHVM64
+    hs1.8xlarge:
+      Arch: NATHVM64
+    cr1.8xlarge:
+      Arch: NATHVM64
+    cc2.8xlarge:
+      Arch: NATHVM64
+  AWSRegionArch2AMI:
+    us-east-1:
+      HVM64: ami-0ed9277fb7eb570c9 
+    us-east-2:
+      HVM64: ami-002068ed284fb165b
+    us-west-1:
+      HVM64: ami-03af6a70ccd8cb578
+    eu-west-1:
+      HVM64: ami-04dd4500af104442f
+    eu-west-2:
+      HVM64: ami-0d37e07bd4ff37148
+    
+Resources:
+      VPC:
+        Type: 'AWS::EC2::VPC'
+        Properties:
+          CidrBlock: 10.0.0.0/16
+     
+      PublicSubnet1:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+          VpcId: !Ref VPC
+          AvailabilityZone: eu-west-2a
+          CidrBlock: 10.0.1.0/24
+          MapPublicIpOnLaunch: true
+     
+      PublicSubnet2:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+          VpcId: !Ref VPC
+          AvailabilityZone: eu-west-2b
+          CidrBlock: 10.0.2.0/24
+          MapPublicIpOnLaunch: true
+     
+      PrivateSubnet1:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+          VpcId: !Ref VPC
+          AvailabilityZone: eu-west-2a
+          CidrBlock: 10.0.3.0/24
+          MapPublicIpOnLaunch: false
+     
+      PrivateSubnet2:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+          VpcId: !Ref VPC
+          AvailabilityZone: eu-west-2b
+          CidrBlock: 10.0.4.0/24
+          MapPublicIpOnLaunch: false
+      
+      InternetGateway:
+         Type: AWS::EC2::InternetGateway
+         DependsOn: VPC
+
+      GatewayToInternet:
+         Type: AWS::EC2::VPCGatewayAttachment
+         Properties:
+          InternetGatewayId: !Ref InternetGateway
+          VpcId: !Ref VPC
+
+        # Public Subnets Route Tables and routes
+
+      PublicRouteTable:
+         Type: AWS::EC2::RouteTable
+         Properties:
+           VpcId: !Ref VPC
+     
+
+      PublicSubnetsRoute:
+        Type: AWS::EC2::Route
+        DependsOn: GatewayToInternet
+        Properties:
+          RouteTableId: !Ref PublicRouteTable
+          DestinationCidrBlock: 0.0.0.0/0
+          GatewayId: !Ref InternetGateway         
+   
+      PublicSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+          RouteTableId: !Ref PublicRouteTable
+          SubnetId: !Ref PublicSubnet1      
+    
+      PublicSubnet2RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+          RouteTableId: !Ref PublicRouteTable
+          SubnetId: !Ref PublicSubnet2
+
+       # Private Subnets - NAT Gateways
+      NatGatewayEIP:
+        DependsOn: GatewayToInternet           
+        Type: AWS::EC2::EIP
+        Properties:
+          Domain: VPC
+
+      NatGateway:
+        Type: AWS::EC2::NatGateway
+        Properties:
+          AllocationId: !GetAtt NatGatewayEIP.AllocationId
+          SubnetId: !Ref PublicSubnet1          
+
+      PrivateSubnet1RouteTable:
+        Type: AWS::EC2::RouteTable
+        Properties:
+          VpcId: !Ref VPC
+      
+      PrivateSubnet1Route:
+        Type: AWS::EC2::Route
+        Properties:
+          RouteTableId: !Ref PrivateSubnet1RouteTable
+          DestinationCidrBlock: 0.0.0.0/0
+          NatGatewayId: !Ref NatGateway
+
+      PrivateSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+          SubnetId: !Ref PrivateSubnet1
+          RouteTableId: !Ref PrivateSubnet1RouteTable      
+  
+      PrivateSubnet2RouteTable:
+        Type: AWS::EC2::RouteTable
+        Properties:
+          VpcId: !Ref VPC   
+
+      PrivateSubnet2Route:
+        Type: AWS::EC2::Route
+        Properties:
+          RouteTableId: !Ref PrivateSubnet2RouteTable
+          DestinationCidrBlock: 0.0.0.0/0
+          NatGatewayId: !Ref NatGateway
+
+      PrivateSubnet2RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+          SubnetId: !Ref PrivateSubnet2
+          RouteTableId: !Ref PrivateSubnet2RouteTable
+        
+      ApplicationLoadBalancer:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        Properties: 
+          Name: MyApplicationLoadBalancer
+          Scheme: internet-facing
+          SecurityGroups: 
+            - !Ref EBLSecurityGroup
+          Subnets: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+
+      ALBListener:
+        Type: AWS::ElasticLoadBalancingV2::Listener
+        Properties:  
+          LoadBalancerArn: !Ref ApplicationLoadBalancer
+          Port: 80
+          Protocol: HTTP
+          DefaultActions:
+            - Type: forward
+              TargetGroupARN: !Ref EC2Targetgroup 
+
+      EC2Targetgroup:
+        Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        Properties:
+          HealthCheckIntervalSeconds: 30
+          HealthCheckPath: /
+          HealthCheckTimeoutSeconds: 5
+          HealthyThresholdCount: 2
+          Name: EC2TargetGroup
+          Port: 80
+          Protocol: HTTP
+          UnhealthyThresholdCount: 5
+          VpcId: !Ref VPC
+    
+      EBLSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+          GroupDescription: "Enable HTTP from 0.0.0.0/0"
+          VpcId: !Ref VPC
+          SecurityGroupIngress:
+            FromPort: 80
+            IpProtocol: "tcp"
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+
+      LaunchConfig:
+        Type: 'AWS::AutoScaling::LaunchConfiguration'
+        Properties:
+          KeyName: ec2_keypair
+          ImageId: !FindInMap [AWSRegionArch2AMI, !Ref 'AWS::Region', !FindInMap [AWSInstanceType2Arch,
+          !Ref 'InstanceType', Arch]]
+          InstanceType: !Ref 'InstanceType'
+          SecurityGroups: 
+            - !Ref InstanceSecurityGroup
+          LaunchConfigurationName: Task1LaunchConfiguration
+          UserData:
+            Fn::Base64: !Sub |
+              #!/bin/bash
+              yum update -y
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "Hello World" > /var/www/html/index.html
+
+      AutoScalingGroup:
+        Type: 'AWS::AutoScaling::AutoScalingGroup'
+        Properties:
+          AutoScalingGroupName:  Task1 Autoscaling Group
+          Cooldown: 300
+          DesiredCapacity: '2'
+          LaunchConfigurationName: Task1LaunchConfiguration
+          MaxSize: '4'
+          MinSize: '2'
+          TargetGroupARNs:
+            - !Ref EC2Targetgroup
+          VPCZoneIdentifier: 
+            - !Ref PrivateSubnet1
+            - !Ref PublicSubnet2
+
+
+      InstanceSecurityGroup: 
+        Type: 'AWS::EC2::SecurityGroup'
+        Properties:
+          GroupDescription: Enable  HTTP access on the inbound port
+          VpcId: !Ref VPC
+          SecurityGroupIngress:
+            - IpProtocol: tcp
+              FromPort: '80'
+              ToPort: '80'
+              
